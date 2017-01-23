@@ -9,6 +9,7 @@ import torch.nn.parallel
 import torch.utils.data
 import torchvision.datasets as datasets
 import torchvision.transforms as transforms
+import progressbar
 
 import res
 # [ 125.30691805  122.95039414  113.86538318]
@@ -65,6 +66,11 @@ def train(train_loader, model, criterion, optimizer, epoch):
     model.train()
 
     end = time.time()
+    bar = progressbar.ProgressBar(widgets=[
+        ' [', progressbar.Timer(), '] ',
+        progressbar.Bar(),
+        ' (', progressbar.ETA(), ') ',
+    ], maxval=len(train_loader)).start()
     for i, (input, target) in enumerate(train_loader):
         # measure data loading time
         data_time.update(time.time() - end)
@@ -90,14 +96,16 @@ def train(train_loader, model, criterion, optimizer, epoch):
         # measure elapsed time
         batch_time.update(time.time() - end)
         end = time.time()
-        if i == 390:
-            print('Epoch: [{0}][{1}/{2}]\t'
-                  'Time {batch_time.val:.3f} ({batch_time.avg:.3f})\t'
-                  'Data {data_time.val:.3f} ({data_time.avg:.3f})\t'
-                  'Loss {loss.val:.4f} ({loss.avg:.4f})\t'
-                  'Prec@1 {top1.val:.3f} ({top1.avg:.3f})'.format(
-                epoch, i, len(train_loader), batch_time=batch_time,
-                data_time=data_time, loss=losses, top1=top1))
+        # if i == 390:
+        #     print('Epoch: [{0}][{1}/{2}]\t'
+        #           'Time {batch_time.val:.3f} ({batch_time.avg:.3f})\t'
+        #           'Data {data_time.val:.3f} ({data_time.avg:.3f})\t'
+        #           'Loss {loss.val:.4f} ({loss.avg:.4f})\t'
+        #           'Prec@1 {top1.val:.3f} ({top1.avg:.3f})'.format(
+        #         epoch, i, len(train_loader), batch_time=batch_time,
+        #         data_time=data_time, loss=losses, top1=top1))
+        bar.update(i)
+    bar.finish()
 
 
 def test(test_loader, model, criterion):
@@ -121,17 +129,18 @@ def test(test_loader, model, criterion):
         # measure accuracy and record loss
         prec1 = accuracy(output.data, target)
         losses.update(loss.data[0], input.size(0))
+        top1.update(prec1[0], input.size(0))
 
         # measure elapsed time
         batch_time.update(time.time() - end)
         end = time.time()
-        if i == len(test_loader):
-            print('Test: [{0}][{1}]\t'
-                  'Time {batch_time.val:.3f} ({batch_time.avg:.3f})\t'
-                  'Loss {loss.val:.4f} ({loss.avg:.4f})\t'
-                  'Prec@1 {top1.val:.3f} ({top1.avg:.3f})'.format(
-                i, len(test_loader), batch_time=batch_time,
-                loss=losses, top1=top1))
+        # if i == len(test_loader)-1:
+        #     print('Test: [{0}][{1}]\t'
+        #           'Time {batch_time.val:.3f} ({batch_time.avg:.3f})\t'
+        #           'Loss {loss.val:.4f} ({loss.avg:.4f})\t'
+        #           'Prec@1 {top1.val:.3f} ({top1.avg:.3f})'.format(
+        #         i, len(test_loader), batch_time=batch_time,
+        #         loss=losses, top1=top1))
 
     print(' * Prec@1 {top1.avg:3f}'.format(top1=top1))
 

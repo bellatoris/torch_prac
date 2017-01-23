@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="WebServers">
+    <option name="servers">
+      <webServer id="78118010-5268-420d-8fcc-1f2de54245d4" name="doogie" url="http://175.197.34.173">
+        <fileTransfer host="175.197.34.173" port="803" rootFolder="/home/doogiemin" accessType="SFTP">
+          <advancedOptions>
+            <advancedOptions dataProtectionLevel="Private" />
+          </advancedOptions>
+          <option name="port" value="803" />
+        </fileTransfer>
+      </webServer>
+    </option>
+  </component>
+</project>

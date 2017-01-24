@@ -32,13 +32,16 @@ def main():
     ]))
 
     train_loader = torch.utils.data.DataLoader(
-        train_data, batch_size=128, shuffle=True)
+        train_data, batch_size=128, shuffle=True,
+        num_workers=4, pin_memory=True)
 
     test_loader = torch.utils.data.DataLoader(
         datasets.CIFAR10(root='./data', train=False, transform=transforms.Compose([
             transforms.ToTensor(),
             transforms.Normalize([0.49, 0.482, 0.447], [0.247, 0.243, 0.259])
-        ])))
+        ])),
+        batch_size=128, shuffle=False,
+        num_workers=4, pin_memory=True)
 
     # define loss function (criterion) and optimizer
     criterion = nn.CrossEntropyLoss().cuda()
@@ -106,6 +109,7 @@ def train(train_loader, model, criterion, optimizer, epoch):
         #         data_time=data_time, loss=losses, top1=top1))
         bar.update(i)
     bar.finish()
+    print(' * Prec@1 {top1.avg:3f}'.format(top1=top1))
 
 
 def test(test_loader, model, criterion):

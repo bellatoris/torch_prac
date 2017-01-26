@@ -1,15 +1,13 @@
 from __future__ import print_function
 
-import time
-
+import progressbar
 import torch
-import torch.nn as nn
 import torch.backends.cudnn as cudnn
+import torch.nn as nn
 import torch.nn.parallel
 import torch.utils.data
 import torchvision.datasets as datasets
 import torchvision.transforms as transforms
-import progressbar
 
 import res
 # [ 125.30691805  122.95039414  113.86538318]
@@ -40,7 +38,7 @@ def main():
             transforms.ToTensor(),
             transforms.Normalize([0.49, 0.482, 0.447], [0.247, 0.243, 0.259])
         ])),
-        batch_size=128, shuffle=False,
+        batch_size=125, shuffle=False,
         num_workers=4, pin_memory=True)
 
     # define loss function (criterion) and optimizer
@@ -61,23 +59,14 @@ def main():
 
 def train(train_loader, model, criterion, optimizer, epoch):
     batch_time = AverageMeter()
-    data_time = AverageMeter()
     losses = AverageMeter()
     top1 = AverageMeter()
 
     # switch to train mode
     model.train()
 
-    end = time.time()
-    bar = progressbar.ProgressBar(widgets=[
-        ' [', progressbar.Timer(), '] ',
-        progressbar.Bar(),
-        ' (', progressbar.ETA(), ') ',
-    ], maxval=len(train_loader)).start()
+    bar = progressbar.ProgressBar(max_value=len(train_loader))
     for i, (input, target) in enumerate(train_loader):
-        # measure data loading time
-        data_time.update(time.time() - end)
-
         target = target.cuda(async=True)
         input_var = torch.autograd.Variable(input)
         target_var = torch.autograd.Variable(target)
@@ -96,31 +85,18 @@ def train(train_loader, model, criterion, optimizer, epoch):
         loss.backward()
         optimizer.step()
 
-        # measure elapsed time
-        batch_time.update(time.time() - end)
-        end = time.time()
-        # if i == 390:
-        #     print('Epoch: [{0}][{1}/{2}]\t'
-        #           'Time {batch_time.val:.3f} ({batch_time.avg:.3f})\t'
-        #           'Data {data_time.val:.3f} ({data_time.avg:.3f})\t'
-        #           'Loss {loss.val:.4f} ({loss.avg:.4f})\t'
-        #           'Prec@1 {top1.val:.3f} ({top1.avg:.3f})'.format(
-        #         epoch, i, len(train_loader), batch_time=batch_time,
-        #         data_time=data_time, loss=losses, top1=top1))
         bar.update(i)
-    bar.finish()
+
     print(' * Prec@1 {top1.avg:3f}'.format(top1=top1))
 
 
 def test(test_loader, model, criterion):
-    batch_time = AverageMeter()
     losses = AverageMeter()
     top1 = AverageMeter()
 
     # switch to evaluate mode
     model.eval()
 
-    end = time.time()
     for i, (input, target) in enumerate(test_loader):
         target = target.cuda(async=True)
         input_var = torch.autograd.Variable(input, volatile=True)
@@ -134,17 +110,6 @@ def test(test_loader, model, criterion):
         prec1 = accuracy(output.data, target)
         losses.update(loss.data[0], input.size(0))
         top1.update(prec1[0], input.size(0))
-
-        # measure elapsed time
-        batch_time.update(time.time() - end)
-        end = time.time()
-        # if i == len(test_loader)-1:
-        #     print('Test: [{0}][{1}]\t'
-        #           'Time {batch_time.val:.3f} ({batch_time.avg:.3f})\t'
-        #           'Loss {loss.val:.4f} ({loss.avg:.4f})\t'
-        #           'Prec@1 {top1.val:.3f} ({top1.avg:.3f})'.format(
-        #         i, len(test_loader), batch_time=batch_time,
-        #         loss=losses, top1=top1))
 
     print(' * Prec@1 {top1.avg:3f}'.format(top1=top1))
 

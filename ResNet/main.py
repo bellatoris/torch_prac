@@ -8,6 +8,7 @@ import torch.nn.parallel
 import torch.utils.data
 import torchvision.datasets as datasets
 import torchvision.transforms as transforms
+import time
 
 import res
 # [ 125.30691805  122.95039414  113.86538318]
@@ -17,7 +18,8 @@ import res
 def main():
     print("=> creating model '{}'".format('resnet_110'))
     model = res.resnet_110()
-    model = torch.nn.DataParallel(model).cuda()
+    model = model.cuda()
+
     cudnn.benchmark = True
 
     # Data loading code
@@ -66,9 +68,9 @@ def train(train_loader, model, criterion, optimizer, epoch):
     model.train()
 
     bar = progressbar.ProgressBar(max_value=len(train_loader))
-    for i, (input, target) in enumerate(train_loader):
+    for i, (input_data, target) in enumerate(train_loader):
         target = target.cuda(async=True)
-        input_var = torch.autograd.Variable(input)
+        input_var = torch.autograd.Variable(input_data.cuda(async=True))
         target_var = torch.autograd.Variable(target)
 
         # compute output
@@ -77,8 +79,8 @@ def train(train_loader, model, criterion, optimizer, epoch):
 
         # measure accuracy and record loss
         prec1 = accuracy(output.data, target)
-        losses.update(loss.data[0], input.size(0))
-        top1.update(prec1[0], input.size(0))
+        losses.update(loss.data[0], input_data.size(0))
+        top1.update(prec1[0], input_data.size(0))
 
         # compute gradient and do SGD step
         optimizer.zero_grad()
@@ -97,9 +99,9 @@ def test(test_loader, model, criterion):
     # switch to evaluate mode
     model.eval()
 
-    for i, (input, target) in enumerate(test_loader):
+    for i, (input_data, target) in enumerate(test_loader):
         target = target.cuda(async=True)
-        input_var = torch.autograd.Variable(input, volatile=True)
+        input_var = torch.autograd.Variable(input_data, volatile=True)
         target_var = torch.autograd.Variable(target, volatile=True)
 
         # compute output
@@ -108,8 +110,8 @@ def test(test_loader, model, criterion):
 
         # measure accuracy and record loss
         prec1 = accuracy(output.data, target)
-        losses.update(loss.data[0], input.size(0))
-        top1.update(prec1[0], input.size(0))
+        losses.update(loss.data[0], input_data.size(0))
+        top1.update(prec1[0], input_data.size(0))
 
     print(' * Prec@1 {top1.avg:3f}'.format(top1=top1))
 

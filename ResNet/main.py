@@ -101,7 +101,7 @@ def test(test_loader, model, criterion):
 
     for i, (input_data, target) in enumerate(test_loader):
         target = target.cuda(async=True)
-        input_var = torch.autograd.Variable(input_data, volatile=True)
+        input_var = torch.autograd.Variable(input_data.cuda(async=True), volatile=True)
         target_var = torch.autograd.Variable(target, volatile=True)
 
         # compute output

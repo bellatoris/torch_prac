@@ -59,7 +59,7 @@ class ResNet(nn.Module):
 
         for m in self.modules():
             if isinstance(m, nn.Conv2d):
-                n = m.kernel_size[0] * m.kernel_size[1] * m.out_channels
+                n = m.kernel_size[0] * m.kernel_size[1] * m.in_channels
                 m.weight.data.normal_(0, math.sqrt(2. / n))
             elif isinstance(m, nn.BatchNorm2d):
                 m.weight.data.fill_(1)
@@ -92,7 +92,7 @@ class ResNet(nn.Module):
         out = self.layer3(out)
 
         out = self.avg_pool(out)
-        out = out.view(x.size(0), -1)
+        out = out.view(out.size(0), -1)
         out = self.fc(out)
 
         return out

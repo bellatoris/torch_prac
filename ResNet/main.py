@@ -1,6 +1,5 @@
 from __future__ import print_function
 
-import progressbar
 import torch
 import torch.backends.cudnn as cudnn
 import torch.nn as nn
@@ -61,14 +60,18 @@ def main():
 
 def train(train_loader, model, criterion, optimizer, epoch):
     batch_time = AverageMeter()
+    data_time = AverageMeter()
     losses = AverageMeter()
     top1 = AverageMeter()
 
     # switch to train mode
     model.train()
 
-    bar = progressbar.ProgressBar(max_value=len(train_loader))
+    end = time.time()
     for i, (input_data, target) in enumerate(train_loader):
+        # measure data loading time
+        data_time.update(time.time() - end)
+	
         target = target.cuda(async=True)
         input_var = torch.autograd.Variable(input_data.cuda(async=True))
         target_var = torch.autograd.Variable(target)
@@ -87,9 +90,17 @@ def train(train_loader, model, criterion, optimizer, epoch):
         loss.backward()
         optimizer.step()
 
-        bar.update(i)
+	# measure elapsed time
+        batch_time.update(time.time() - end)
+        end = time.time()
 
-    print(' * Prec@1 {top1.avg:3f}'.format(top1=top1))
+        print('Epoch: [{0}][{1}/{2}]\t'
+	      'Time {batch_time.val:.3f} ({batch_time.avg:.3f})\t'
+              'Data {data_time.val:.3f} ({data_time.avg:.3f})\t'
+              'Loss {loss.val:.4f} ({loss.avg:.4f}\t'
+              'Prec {top1.val:.4f} ({top1.avg:.4f}\t'.format(
+              epoch, i, len(train_loader), batch_time=batch_time,
+              loss=losses, data_time=data_time, top1=top1))
 
 
 def test(test_loader, model, criterion):
